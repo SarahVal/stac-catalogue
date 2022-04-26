@@ -144,9 +144,9 @@ load_cube <- function(stac_path =
                       layers = NULL,
                       variable = NULL,
                       srs.cube = "EPSG:32198", 
-                      t0 = "1981-01-01", 
-                      t1 = "1981-01-01",
-                      spatial.res = 2000,
+                      t0 = NULL, 
+                      t1 = NULL,
+                      spatial.res = NULL,
                       temporal.res  = "P1Y", 
                       aggregation = "mean",
                       resampling = "near") {
@@ -208,9 +208,8 @@ load_cube <- function(stac_path =
     # Create datetime object
     datetime <- format(lubridate::as_datetime(t0), "%Y-%m-%dT%H:%M:%SZ")
   } else {
-    it_obj_tmp <- s |> #think changing it for %>%
-      rstac::stac_search(bbox = bbox.wgs84, collections = collections, 
-                         limit = limit) |> rstac::   post_request()
+    it_obj_tmp <- s %>% #think changing it for %>%
+      rstac::stac_search(bbox = bbox.wgs84, collections = collections) %>% rstac::get_request()
     
     datetime <- it_obj_tmp$features[[1]]$properties$datetime
     t0 <- datetime
@@ -224,9 +223,9 @@ load_cube <- function(stac_path =
   }
   RCurl::url.exists(stac_path)
   # CreateRSTACQuery object with the subclass search containing all search field parameters 
-  it_obj <- s |> #think changing it for %>%
+  it_obj <- s %>% #think changing it for %>%
     rstac::stac_search(bbox = bbox.wgs84, collections = collections, 
-                       datetime = datetime) |> rstac::get_request()
+                       datetime = datetime) %>% rstac::get_request()
   
   if (is.null(spatial.res)) {
     name1 <- unlist(lapply(it_obj$features, function(x){names(x$assets)}))[1]
@@ -330,7 +329,7 @@ load_cube_projection <- function(stac_path =
   }
   
   datetime <- format(lubridate::as_datetime(t0), "%Y-%m-%dT%H:%M:%SZ")
-  s <- stac(stac_path)
+  s <- rstac::stac(stac_path)
   
    if (use.obs) {
      
@@ -380,8 +379,8 @@ load_cube_projection <- function(stac_path =
    }
    
   
-  it_obj <- s |>
-    rstac::stac_search(bbox = bbox.wgs84, collections = collections, datetime = datetime) |>post_request() # bbox in decimal lon/lat
+  it_obj <- s %>%
+    rstac::stac_search(bbox = bbox.wgs84, collections = collections, datetime = datetime) %>% get_request() # bbox in decimal lon/lat
   
   # If no layers is selected, get all the layers by default
   if (is.null(layers)) {
@@ -406,8 +405,8 @@ load_cube_projection <- function(stac_path =
   v <- cube_view(srs = srs.cube,  extent = list(t0 = t0, t1 = t0,
                                            left = left, right = right,  top = top, bottom = bottom),
                  dx = spatial.res, dy = spatial.res, dt = temporal.res, aggregation = aggregation, resampling = resampling)
-  gdalcubes_options(threads = 4)
-  cube <- raster_cube(st, v)
+  gdalcubes::gdalcubes_options(threads = 4)
+  cube <- gdalcubes::raster_cube(st, v)
   return(cube)
 }
 
@@ -422,7 +421,7 @@ cube_to_raster <- function(cube, format = "raster") {
   # If not, names are concatenated with temp file names
   
   # We remove the temporal dimension
-  cube.xy <- cube.xy|> abind::adrop(c(F,F,T))
+  cube.xy <- cube.xy%>% abind::adrop(c(F,F,T))
   
   # Conversion to a spatial object
   
@@ -484,9 +483,9 @@ get_info_collection <- function(stac_path =
 
   
   # CreateRSTACQuery object with the subclass search containing all search field parameters 
-  it_obj <- s |> #think changing it for %>%
+  it_obj <- s %>% #think changing it for %>%
     rstac::stac_search(bbox = bbox, collections = collections, 
-                       limit = limit) |> rstac::   post_request()
+                       limit = limit) %>% rstac::   post_request()
   
   layers <- unlist(lapply(it_obj$features, function(x){names(x$assets)}))
   temporal_extent <- unlist(lapply(it_obj$features, function(x){x$properties$datetime}))
