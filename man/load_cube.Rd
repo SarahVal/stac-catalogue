@@ -19,9 +19,9 @@ load_cube(
   layers = NULL,
   variable = NULL,
   srs.cube = "EPSG:32198",
-  t0 = "1981-01-01",
-  t1 = "1981-01-01",
-  spatial.res = 2000,
+  t0 = NULL,
+  t1 = NULL,
+  spatial.res = NULL,
   temporal.res = "P1Y",
   aggregation = "mean",
   resampling = "near"
