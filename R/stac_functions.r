@@ -294,7 +294,7 @@ load_cube <- function(stac_path =
 #' @return a raster stack of variables not intercorrelated
 #' @import gdalcubes dplyr sp sf rstac
 #' @return a proxy raster data cube
-
+#' @export
 load_cube_projection <- function(stac_path =
                                  "http://io.biodiversite-quebec.ca/stac/",
                                limit = 5000,
