@@ -141,6 +141,7 @@ load_cube <- function(stac_path =
                       lat = "lat",
                       buffer.box = 0,
                       bbox = NULL,
+                      mask = NULL,
                       layers = NULL,
                       variable = NULL,
                       srs.cube = "EPSG:32198", 
@@ -255,7 +256,8 @@ load_cube <- function(stac_path =
                                                            top = top, bottom = bottom),
                             dx = spatial.res, dy = spatial.res, dt = temporal.res, aggregation = aggregation, resampling = resampling)
   gdalcubes::gdalcubes_options(parallel = T)
-  cube <- gdalcubes::raster_cube(st, v)
+  cube <- gdalcubes::raster_cube(st, v, mask)
+  
   
   return(cube)
 }
