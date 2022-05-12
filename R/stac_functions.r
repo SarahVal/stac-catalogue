@@ -672,7 +672,9 @@ load_prop_values <- function(stac_path = "https://io.biodiversite-quebec.ca/stac
           as("Raster")
         cube_class <- cube_class / ((prop.res / spatial.res)^2)
       } else {
-        cube_class <- cube_class %>% cube_to_raster()
+        cube_class <- cube_class %>%
+          stars::st_as_stars() %>%
+          as("Raster")
       }
 
       cube_class <- cube_class[[j]]
