@@ -1,5 +1,5 @@
 ---
-title: "Using the STAC catalogue to load and aggregate ladn cover classes"
+title: "Using the STAC catalogue to load and aggregate land cover classes"
 output: html_document
 ---
 
