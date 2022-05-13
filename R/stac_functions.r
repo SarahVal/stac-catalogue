@@ -134,6 +134,7 @@ load_cube <-
            limit = 5000, collections = c("chelsa-clim"), use.obs = T,
            obs = NULL, lon = "lon", lat = "lat", buffer.box = 0,
            bbox = NULL, layers = NULL, variable = NULL,
+           mask = NULL,
            srs.cube = "EPSG:32198", t0 = NULL, t1 = NULL, spatial.res = NULL,
            temporal.res = "P1Y", aggregation = "mean", resampling = "near") {
     s <- rstac::stac(stac_path)
