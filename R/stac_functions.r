@@ -426,14 +426,14 @@ cube_to_raster <- function(cube, format = "raster") {
 }
 
 #' @export
-extract_gdal_cube <- function(cube, n_sample = 5000, simplify = T) {
-  x_min <- min(gdalcubes::dimension_values(cube)$x)
-  x_max <- max(gdalcubes::dimension_values(cube)$x)
-  y_min <- min(gdalcubes::dimension_values(cube)$y)
-  y_max <- max(gdalcubes::dimension_values(cube)$y)
+extract_gdal_cube <- function(cube, n_sample = 5000, simplify = T, xy = F) {
+  x_min <- gdalcubes::dimensions(cube)$x$low
+  x_max <- gdalcubes::dimensions(cube)$x$high
+  y_min <- gdalcubes::dimensions(cube)$y$low
+  y_max <- gdalcubes::dimensions(cube)$y$high
 
   # ensure that the number of samplis is smaller than the number of pixels
-  n_sample <- min(n_sample, dim(cube)[1] * dim(cube)[2])
+  n_sample <- min(n_sample, gdalcubes::dimensions(cube)$x$count * gdalcubes::dimensions(cube)$y$count)
 
   x <- runif(n_sample, x_min, x_max)
   y <- runif(n_sample, y_min, y_max)
@@ -441,6 +441,9 @@ extract_gdal_cube <- function(cube, n_sample = 5000, simplify = T) {
   df <- sf::st_as_sf(data.frame(x = x, y = y), coords = c("x", "y"), crs = srs(cube))
   value_points <- gdalcubes::extract_geom(cube, df)
 
+  if (xy) {
+    value_points <- bind_cols(value_points, data.frame(x = x, y = y))
+  }
   if (simplify) {
     value_points <- value_points %>% dplyr::select(-FID, -time)
   }
@@ -545,6 +548,7 @@ load_prop_values <- function(stac_path = "https://io.biodiversite-quebec.ca/stac
                              collections = c("esacci-lc"),
                              use.obs = T,
                              obs = obs.coords.proj,
+                             bbox = NULL,
                              buffer.box = 0,
                              lat = "lat",
                              lon = "lon",
