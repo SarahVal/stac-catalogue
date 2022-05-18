@@ -7,7 +7,7 @@ output:
   pdf_document: default
 ---
 
-```{r setup}
+```{r setup, warning = F}
 knitr::opts_chunk$set(echo = TRUE)
 library("gdalcubes")
 library("rstac")
