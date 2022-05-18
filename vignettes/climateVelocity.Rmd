@@ -1,0 +1,125 @@
+---
+title: "climateVelocity"
+author: "Sarah Valentin"
+date: "18/05/2022"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup}
+knitr::opts_chunk$set(echo = TRUE)
+library("gdalcubes")
+library("rstac")
+library("tibble")
+library("sp")
+library("sf")
+library("dplyr")
+library("rgbif")
+library("tidyr")
+library("stars")
+devtools::install_github("ReseauBiodiversiteQuebec/stac-catalogue")
+library("stacatalogue")
+```
+
+```{r}
+climate_velocity <- function(current_tmean, future_tmean, time_span,
+                             type = "local",  opt="slope", units = "meters", 
+                             neighbors=8) { 
+  if (type == "local") {
+    
+    # 1. Spatial gradient
+    # Neighborhood Slope Algorithm, average maximum technique
+    spatial_gradient <- raster::terrain(current_tmean,
+                                        opt = opt,
+                                        units = units,
+                                        neighbors=neighbors  # (queen case) 
+    )
+    # Truncating zero values
+    spatial_gradient[spatial_gradient <= 0.00001] <- 0.00001
+  }
+  
+  # 2. Temporal gradient
+  temporal_gradient <- (future_tmean - current_tmean)/time_span
+  
+  # 3. Velocity
+  local_velocity <- temporal_gradient/spatial_gradient
+  
+  return(local_velocity)
+}
+```
+
+We create a box (Quebec plus buffer)
+```{r}
+bbox <- data.frame("xmin" = -1631298.5, "xmax" = 1183769.6, "ymax" =  3202287.0,"ymin" = -945173.4 )
+srs.cube <- "EPSG:6623" 
+```
+
+
+### Mean temperature in 1981
+```{r, warning=F}
+cube <- 
+  load_cube(stac_path = "https://io.biodiversite-quebec.ca/stac/",
+            limit = NULL, 
+            collections = c("chelsa-monthly"), 
+            use.obs = F,
+            bbox = bbox,
+            buffer.box = 0,
+            variable = "tas",
+            srs.cube = srs.cube,
+            t0 = "1981-01-01",
+            t1 = "1981-12-01",
+            spatial.res = 1000, # in meters
+            temporal.res = "P1Y",
+            aggregation = "mean",
+            resampling = "near") 
+
+sum_bands <-  paste(names(cube), collapse="+")
+mean_bands <- sprintf("(%s)/%i", sum_bands, length(names(cube)))
+cube_bands <-  select_bands(cube, bands =  names(cube))
+tmean_cube <- apply_pixel(cube_bands, mean_bands, names = "mean_tmean")
+tmean_cube_1981 <- cube_to_raster(tmean_cube, format = "terra")
+```
+
+### Mean temperature in 2019
+```{r, warning=F}
+cube <- 
+  load_cube(stac_path = "https://io.biodiversite-quebec.ca/stac/",
+            limit = 5000, 
+            collections = c("chelsa-monthly"), 
+            use.obs = F,
+            bbox = bbox,
+            buffer.box = 0,
+            variable = "tas",
+            srs.cube = srs.cube,
+            t0 = "2019-01-01",
+            t1 = "2019-12-01",
+            spatial.res = 1000, # in meters
+            temporal.res = "P1Y",
+            aggregation = "mean",
+            resampling = "near") 
+sum_bands <-  paste(names(cube), collapse="+")
+mean_bands <- sprintf("(%s)/%i", sum_bands, length(names(cube)))
+cube_bands <-  select_bands(cube, bands =  names(cube))
+tmean_cube <- apply_pixel(cube_bands, mean_bands, names = "mean_tmean")
+tmean_cube_2019 <- cube_to_raster(tmean_cube, format = "terra")
+```
+
+### Local climate velocity
+```{r}
+tmean_cube_2019 <- (tmean_cube_2019 / 10) - 273.15
+tmean_cube_1981 <- (tmean_cube_1981 / 10) - 273.15
+c_velocity <-
+  climate_velocity(
+    raster::raster(tmean_cube_1981),
+    raster::raster(tmean_cube_2019),
+    time_span = 2019 - 1981,
+    type = "local",
+    opt = "slope",
+    units = "meters",
+    neighbors = 8
+  )
+
+c_velocity <- terra::rast(c_velocity)
+plot(c_velocity)
+```

@@ -1,6 +1,8 @@
 ---
 title: "Using the STAC catalogue to load current and future climate data"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -14,6 +16,7 @@ library("dplyr")
 library("rgbif")
 library("tidyr")
 library("stars")
+devtools::install_git("ReseauBiodiversiteQuebec/stac-catalogue")
 library("stacatalogue")
 ```
 
@@ -80,7 +83,6 @@ layers <- c("bio6", "bio13")
 
 cube <- 
   load_cube(stac_path = "https://io.biodiversite-quebec.ca/stac/",
-           limit = 5000, 
            collections = c("chelsa-clim"), 
            use.obs = T,
            obs = obs.coords.proj,
@@ -179,7 +181,6 @@ head(value.points.future)
 ```{r, warning=FALSE}
 get_info_collection(stac_path =
                                   "http://io.biodiversite-quebec.ca/stac/",
-                                limit = 5000,
                                 collections = c('esacci-lc'),
                                 bbox = NULL)
 
@@ -188,7 +189,6 @@ get_info_collection(stac_path =
 ```{r, warning=FALSE}
 cube <- 
   load_cube(stac_path = "https://io.biodiversite-quebec.ca/stac/",
-           limit = 5000, 
            collections = c("esacci-lc"), 
            use.obs = T,
            obs = obs.coords.proj,
@@ -212,7 +212,6 @@ plot(cube %>% select_bands("esacci-lc-2000"))
 ```{r, warning=FALSE}
 cube <- 
   load_cube(stac_path = "https://io.biodiversite-quebec.ca/stac/",
-           limit = 5000, 
            collections = c("ghmts"), 
            use.obs = T,
            obs = obs.coords.proj,
@@ -239,7 +238,6 @@ get_info_collection(stac_path =
 ```{r, warning=FALSE}
 cube <- 
   load_cube(stac_path = "http://io.biodiversite-quebec.ca/stac/",
-           limit = 5000, 
            collections = c("chelsa-monthly"), 
            use.obs = T,
            obs = obs.coords.proj,
