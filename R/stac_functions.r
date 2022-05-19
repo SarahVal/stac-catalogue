@@ -190,26 +190,8 @@ load_cube <-
         sf::st_transform(crs = "EPSG:4326") %>%
         sf::st_bbox()
     } else {
-      bbox.proj <- bbox
-      left <- bbox.proj$xmin
-      right <- bbox.proj$xmax
-      bottom <- bbox.proj$ymin
-      top <- bbox.proj$ymax
-      if (left > right) {
-        stop("left and right seem reversed")
-      }
-      if (bottom > top) {
-        stop("bottom and top seem reversed")
-      }
-      bbox.wgs84 <- c(
-        "xmin" = left,
-        "xmax" = right,
-        "ymax" = top,
-        "ymin" =  bottom
-      )  %>%
-        sf::st_bbox(crs = srs.cube) %>%
-        sf::st_as_sfc() %>%
-        sf::st_transform(crs = "EPSG:4326") %>%
+      bbox.wgs84 <- bbox %>% sf::st_bbox(crs = srs.cube) %>% 
+        sf::st_as_sfc() %>% sf::st_transform(crs = "EPSG:4326") %>% 
         sf::st_bbox()
     }
     if (!is.null(t0)) {
@@ -383,27 +365,8 @@ load_cube_projection <- function(stac_path =
       sf::st_transform(crs = 4326) %>%
       sf::st_bbox()
   } else {
-    bbox.proj <- bbox
-    left <- bbox.proj$xmin
-    right <- bbox.proj$xmax
-    bottom <- bbox.proj$ymin
-    top <- bbox.proj$ymax
-    
-    if (left > right)
-      stop("left and right seem reversed")
-    if (bottom > top)
-      stop("bottom and top seem reversed")
-    
-    
-    bbox.wgs84  <- c(
-      "xmin" = left,
-      "xmax" = right,
-      "ymax" = top,
-      "ymin" =  bottom
-    )  %>%
-      sf::st_bbox(crs = srs.cube) %>%
-      sf::st_as_sfc() %>%
-      sf::st_transform(crs = 4326) %>%
+    bbox.wgs84 <- bbox %>% sf::st_bbox(crs = srs.cube) %>% 
+      sf::st_as_sfc() %>% sf::st_transform(crs = "EPSG:4326") %>% 
       sf::st_bbox()
   }
   
@@ -413,7 +376,7 @@ load_cube_projection <- function(stac_path =
                        collections = collections,
                        datetime = datetime,
                        limit = limit) %>%
-    get_request() # bbox in decimal lon/lat
+    rstac::get_request() # bbox in decimal lon/lat
   
   # If no layers is selected, get all the layers by default
   if (is.null(layers)) {
@@ -444,7 +407,7 @@ load_cube_projection <- function(stac_path =
   
   
   # if layers = NULL, load all the layers
-  v <- cube_view(
+  v <- gdalcubes::cube_view(
     srs = srs.cube,
     extent = list(
       t0 = t0,
