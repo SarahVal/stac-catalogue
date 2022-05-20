@@ -170,30 +170,33 @@ load_cube <-
     s <- rstac::stac(stac_path)
     if (use.obs) {
       if (inherits(obs, "data.frame")) {
-        proj.pts <- project_coords(obs,
-                                   lon = lon,
-                                   lat = lat,
-                                   proj_from = srs.cube)
+        # Reproject the obs to the data cube projection
+        proj.pts <-
+          project_coords(obs,
+                         lon = lon,
+                         lat = lat,
+                         proj_from = srs.cube)
       } else {
         proj.pts <- obs
       }
-      bbox.proj <- points_to_bbox(proj.pts,
-                                  proj_from = srs.cube,
-                                  buffer = buffer.box)
-      left <- bbox.proj$xmin
-      right <- bbox.proj$xmax
-      bottom <- bbox.proj$ymin
-      top <- bbox.proj$ymax
-      bbox.wgs84 <- bbox.proj %>%
-        sf::st_bbox(crs = srs.cube) %>%
-        sf::st_as_sfc() %>%
-        sf::st_transform(crs = "EPSG:4326") %>%
-        sf::st_bbox()
+      
+      # Create the extent (data cube projection)
+      bbox <- points_to_bbox(proj.pts, buffer = buffer.box)
+      
     } else {
+      
+      left <- bbox$xmin
+      right <- bbox$xmax
+      bottom <- bbox$ymin
+      top <- bbox$ymax
+      
+      # Create the bbxo (WGS84 projection)
+      
       bbox.wgs84 <- bbox %>% sf::st_bbox(crs = srs.cube) %>% 
         sf::st_as_sfc() %>% sf::st_transform(crs = "EPSG:4326") %>% 
         sf::st_bbox()
     }
+    
     if (!is.null(t0)) {
       datetime <- format(lubridate::as_datetime(t0), "%Y-%m-%dT%H:%M:%SZ")
     } else {
@@ -352,19 +355,17 @@ load_cube_projection <- function(stac_path =
     }
     
     # Create the extent (data cube projection)
-    bbox.proj <- points_to_bbox(proj.pts, buffer = buffer.box)
-    left <- bbox.proj$xmin
-    right <- bbox.proj$xmax
-    bottom <- bbox.proj$ymin
-    top <- bbox.proj$ymax
+    bbox <- points_to_bbox(proj.pts, buffer = buffer.box)
+    
+  } else {
+  
+    left <- bbox$xmin
+    right <- bbox$xmax
+    bottom <- bbox$ymin
+    top <- bbox$ymax
     
     # Create the bbxo (WGS84 projection)
-    bbox.wgs84 <- bbox.proj %>%
-      sf::st_bbox(crs = srs.cube) %>%
-      sf::st_as_sfc() %>%
-      sf::st_transform(crs = 4326) %>%
-      sf::st_bbox()
-  } else {
+
     bbox.wgs84 <- bbox %>% sf::st_bbox(crs = srs.cube) %>% 
       sf::st_as_sfc() %>% sf::st_transform(crs = "EPSG:4326") %>% 
       sf::st_bbox()
