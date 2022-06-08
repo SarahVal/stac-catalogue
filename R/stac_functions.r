@@ -183,7 +183,7 @@ load_cube <-
       # Create the extent (data cube projection)
       bbox <- points_to_bbox(proj.pts, buffer = buffer.box)
       
-    } else {
+    } 
       
       left <- bbox$xmin
       right <- bbox$xmax
@@ -195,7 +195,7 @@ load_cube <-
       bbox.wgs84 <- bbox %>% sf::st_bbox(crs = srs.cube) %>% 
         sf::st_as_sfc() %>% sf::st_transform(crs = "EPSG:4326") %>% 
         sf::st_bbox()
-    }
+   
     
     if (!is.null(t0)) {
       datetime <- format(lubridate::as_datetime(t0), "%Y-%m-%dT%H:%M:%SZ")
@@ -357,7 +357,7 @@ load_cube_projection <- function(stac_path =
     # Create the extent (data cube projection)
     bbox <- points_to_bbox(proj.pts, buffer = buffer.box)
     
-  } else {
+  } 
   
     left <- bbox$xmin
     right <- bbox$xmax
@@ -369,8 +369,7 @@ load_cube_projection <- function(stac_path =
     bbox.wgs84 <- bbox %>% sf::st_bbox(crs = srs.cube) %>% 
       sf::st_as_sfc() %>% sf::st_transform(crs = "EPSG:4326") %>% 
       sf::st_bbox()
-  }
-  
+ 
   
   it_obj <- s %>%
     rstac::stac_search(bbox = bbox.wgs84,

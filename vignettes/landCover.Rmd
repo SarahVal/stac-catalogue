@@ -94,7 +94,7 @@ crop_urban_prop <-load_prop_values(stac_path = "https://io.biodiversite-quebec.c
                                 spatial.res = 250, # in meters
                                 prop = T,
                                 prop.res = 1000,
-                                select_values = c(11, 190),
+                                select_values = NULL,
                                 temporal.res =  "P1Y")
 
 ```
