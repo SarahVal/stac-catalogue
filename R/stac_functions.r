@@ -566,6 +566,7 @@ load_prop_values <-
            t0 = "2000-01-01",
            t1 = "2001-12-31",
            spatial.res = 250,
+           bbox = NULL,
            limit = NULL,
            prop = F,
            prop.res = 1000,
