@@ -6,7 +6,7 @@ output:
   pdf_document: default
 ---
 
-```{r setup, include=FALSE}
+```{r setup}
 knitr::opts_chunk$set(echo = TRUE)
 library("gdalcubes")
 library("rstac")
@@ -25,7 +25,8 @@ library("stacatalogue")
 The STAC currently contains the following collections:
 
 ```{r}
-stac("http://io.biodiversite-quebec.ca/stac/") %>%
+stac_path <- "https://io.biodiversite-quebec.ca/stac/"
+stac(stac_path) %>%
   collections() %>%
   get_request()
 
@@ -193,7 +194,7 @@ Spatial resolution is set to 2000 m, with aggregation done using the function me
 ```{r, warning=FALSE}
 layers <- c("bio2", "bio6")
 cube <- 
- load_cube(stac_path = "https://io.biodiversite-quebec.ca/stac/",
+ load_cube(stac_path = stac_path,
            collections = c("chelsa-clim"), 
            bbox = bbox,
            limit = 5000,
@@ -238,7 +239,7 @@ To load the climate data projection from the collection "chelsa-clim-proj", we u
 
 ```{r, warning=FALSE}
 cube.future <- load_cube_projection(stac_path = 
-                                    "https://io.biodiversite-quebec.ca/stac/",
+                                    stac_path,
                                   limit = 5000, 
                                   collections = c('chelsa-clim-proj'), 
                                   bbox = bbox,
@@ -288,7 +289,7 @@ We load ESA time series for the year 2000. We decrease the resolution from 250m 
 
 ```{r, warning=FALSE}
 cube <- 
-  load_cube(stac_path = "https://io.biodiversite-quebec.ca/stac/",
+  load_cube(stac_path = stac_path,
            collections = c("esacci-lc"), 
            bbox = bbox,
            srs.cube = srs_cube,
@@ -321,7 +322,7 @@ In this collection, each variable is declined in several depths. Let's download 
 
 ```{r, warning=FALSE}
 cube <- 
-  load_cube(stac_path = "https://io.biodiversite-quebec.ca/stac/",
+  load_cube(stac_path = stac_path,
            collections = c("soilgrids"), 
            bbox = bbox,
            variable = "sand",
@@ -337,7 +338,7 @@ We can also directly select a specific variable and depth by specifying the laye
 
 ```{r, warning=FALSE}
 cube <- 
-  load_cube(stac_path = "https://io.biodiversite-quebec.ca/stac/",
+  load_cube(stac_path = stac_path,
            collections = c("soilgrids"), 
            bbox = bbox,
            layers = "sand_100-200cm",
