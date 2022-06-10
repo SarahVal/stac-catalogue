@@ -23,7 +23,7 @@ library("stacatalogue")
 Let's download [Glyptemys insculpta](https://en.wikipedia.org/wiki/Wood_turtle) observations from GBIF.
 
 ```{r}
-obs <- rgbif::occ_data(scientificName = "Glyptemys insculpta", hasCoordinate = TRUE, limit = 100)$data
+obs <- rgbif::occ_data(scientificName = "Glyptemys insculpta", hasCoordinate = TRUE, limit = 1000)$data
 obs <- CoordinateCleaner::cc_val(obs, lon = "decimalLongitude", 
                                  lat = "decimalLatitude", verbose = T, value = "clean")
 
@@ -34,16 +34,27 @@ obs <- dplyr::select(obs, decimalLongitude, decimalLatitude) %>%
   dplyr::rename(lon = decimalLongitude) %>%
   dplyr::rename(lat = decimalLatitude) 
 
+
 ```
 
 We reproject the decimal longitude and latitude to a user-specified projection system. This conversion to a projected system is essential to interact with the cube.
 
 ```{r}
-srs.obs <-"EPSG:4326" # initial observations projection system
-srs.cube <- "EPSG:6623" # targeted projected projection system
-obs.coords.proj <- create_projection(obs, lon = "lon", lat = "lat", 
-                                       srs.obs, srs.cube)
-head(obs.coords.proj )
+srs_cube = "EPSG:6623"
+srs_obs <-"EPSG:4326" # initial observations projection system
+buffer <- 0
+
+# Reproject the obs to the data cube projection
+obs_pts <-
+          stacatalogue::project_coords(obs,
+                         lon = "lon",
+                         lat = "lat",
+                         proj_from = srs_obs,
+                         proj_to = srs_cube )
+
+# Create the extent (data cube projection)
+bbox <- stacatalogue::points_to_bbox(obs_pts, buffer = buffer)
+
 ```
 
 ### Filter classes
@@ -56,12 +67,12 @@ plot_categorical <- function(r, main = "") {
   plot(r, legend = FALSE, col = my_col, main = main)
   legend(x = "topright", legend = values, fill = my_col[-1])
 }
-crop_2000_2001 <-load_prop_values(stac_path = "https://io.biodiversite-quebec.ca/stac/",
+
+crop_2000_2001 <- load_prop_values(stac_path = "https://io.biodiversite-quebec.ca/stac/",
                                 collections = c("esacci-lc"), 
-                                use.obs = T,
-                                obs = obs.coords.proj,
-                                buffer.box = 0,
-                                srs.cube = srs.cube,
+                                bbox = bbox,
+                                srs.cube = srs_cube,
+                                limit = 5000,
                                 t0 = "2000-01-01",
                                 t1 = "2001-12-31",
                                 spatial.res = 250, # in meters
@@ -73,40 +84,36 @@ crop_2000_2001 <-load_prop_values(stac_path = "https://io.biodiversite-quebec.ca
 ```{r, warning=FALSE}
 plot_categorical(crop_2000_2001$y2000_class11, main = "Crop - year 2000")
 ```
-```{r, warning=FALSE}
-plot_categorical(crop_2000_2001$y2001_class11, main = "Crop - year 2001")
-```
+
 
 
 ### Calculate proportion of classes
                          
-Let\'s calculate the proportions of crop and urban areas (class 11 and 190) at 1km resolution,  from 2000 to 2001 (2 years). We set prop to TRUE.
+Let\'s calculate the proportions of crop and urban areas (class 11 and 190) at 1km resolution, in 2000. We set prop to TRUE.
 
 ```{r, warning=FALSE}
 crop_urban_prop <-load_prop_values(stac_path = "https://io.biodiversite-quebec.ca/stac/",
                                 collections = c("esacci-lc"), 
-                                use.obs = T,
-                                obs = obs.coords.proj,
-                                buffer.box = 0,
+                                bbox = bbox,
                                 srs.cube = srs.cube,
+                                limit = 5000,
                                 t0 = "2000-01-01",
-                                t1 = "2001-12-31",
+                                t1 = "2000-12-31",
                                 spatial.res = 250, # in meters
                                 prop = T,
                                 prop.res = 1000,
-                                select_values = NULL,
+                                select_values = c(11,190),
                                 temporal.res =  "P1Y")
 
 ```
 
+
 ```{r, warning=FALSE}
 par(mfrow=c(1,2))
 plot(crop_urban_prop$y2000_class11, main = "Proportion of crop - 2000")
-plot(crop_urban_prop$y2001_class11, main = "Proportion of crop - 2001")
 ```
 
 ```{r, warning=FALSE}
 par(mfrow=c(1,2))
 plot(crop_urban_prop$y2000_class190, main = "Proportion of urban area - 2000")
-plot(crop_urban_prop$y2001_class190, main = "Proportion of urban area - 2001")
 ```
