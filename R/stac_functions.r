@@ -151,11 +151,6 @@ load_cube <-
   function(stac_path = "https://io.biodiversite-quebec.ca/stac/",
            limit = NULL,
            collections = c("chelsa-clim"),
-           use.obs = T,
-           obs = NULL,
-           lon = "lon",
-           lat = "lat",
-           buffer.box = 0,
            bbox = NULL,
            layers = NULL,
            variable = NULL,
@@ -167,31 +162,24 @@ load_cube <-
            temporal.res = "P1Y",
            aggregation = "mean",
            resampling = "near") {
+    
     s <- rstac::stac(stac_path)
-    if (use.obs) {
-      if (inherits(obs, "data.frame")) {
-        # Reproject the obs to the data cube projection
-        proj.pts <-
-          project_coords(obs,
-                         lon = lon,
-                         lat = lat,
-                         proj_from = srs.cube)
-      } else {
-        proj.pts <- obs
-      }
-      
-      # Create the extent (data cube projection)
-      bbox <- points_to_bbox(proj.pts, buffer = buffer.box)
-      
-    } 
-      
+   
+    if(!inherits(bbox, "bbox")) stop("The bbox is not a bbox object.")
+    
       left <- bbox$xmin
       right <- bbox$xmax
       bottom <- bbox$ymin
       top <- bbox$ymax
       
-      # Create the bbxo (WGS84 projection)
+      if (left > right) {
+        stop("left and right seem reversed")
+      }
+      if (bottom > top) {
+        stop("bottom and top seem reversed")
+      }
       
+      # Create the bbxo (WGS84 projection)
       bbox.wgs84 <- bbox %>% sf::st_bbox(crs = srs.cube) %>% 
         sf::st_as_sfc() %>% sf::st_transform(crs = "EPSG:4326") %>% 
         sf::st_bbox()
@@ -306,11 +294,6 @@ load_cube_projection <- function(stac_path =
                                    "https://io.biodiversite-quebec.ca/stac/",
                                  limit = NULL,
                                  collections = c("chelsa-clim-proj"),
-                                 use.obs = T,
-                                 obs = NULL,
-                                 lon = "lon",
-                                 lat = "lat",
-                                 buffer.box = 0,
                                  bbox = NULL,
                                  layers = NULL,
                                  variable = NULL,
@@ -342,27 +325,17 @@ load_cube_projection <- function(stac_path =
     format(lubridate::as_datetime(t0), "%Y-%m-%dT%H:%M:%SZ")
   s <- rstac::stac(stac_path)
   
-  if (use.obs) {
-    if (inherits(obs, "data.frame")) {
-      # Reproject the obs to the data cube projection
-      proj.pts <-
-        project_coords(obs,
-                       lon = lon,
-                       lat = lat,
-                       proj_from = srs.cube)
-    } else {
-      proj.pts <- obs
-    }
-    
-    # Create the extent (data cube projection)
-    bbox <- points_to_bbox(proj.pts, buffer = buffer.box)
-    
-  } 
-  
     left <- bbox$xmin
     right <- bbox$xmax
     bottom <- bbox$ymin
     top <- bbox$ymax
+    
+    if (left > right) {
+      stop("left and right seem reversed")
+    }
+    if (bottom > top) {
+      stop("bottom and top seem reversed")
+    }
     
     # Create the bbxo (WGS84 projection)
 
@@ -508,7 +481,8 @@ get_info_collection <- function(stac_path =
       xmax = 180,
       ymax = 90,
       ymin = -90
-    )
+    )  %>% 
+      sf::st_bbox(crs = "EPSG:4326")
   }
   
   
@@ -516,7 +490,7 @@ get_info_collection <- function(stac_path =
   it_obj <- s %>% # think changing it for %>%
     rstac::stac_search(bbox = bbox,
                        collections = collections,
-                       limit = limit) %>% rstac::post_request()
+                       limit = limit) %>% rstac::get_request()
   
   layers <- unlist(lapply(it_obj$features, function(x) {
     names(x$assets)
@@ -543,7 +517,7 @@ get_info_collection <- function(stac_path =
   return(
     list(
       "layers" = layers,
-      "variable" = variable,
+      "variables" = variable,
       "t0" = t0,
       "t1" = t1,
       "spatial_resolution" = spatial_res
@@ -588,18 +562,11 @@ get_info_collection <- function(stac_path =
 load_prop_values <-
   function(stac_path = "https://io.biodiversite-quebec.ca/stac/",
            collections = c("esacci-lc"),
-           use.obs = T,
-           obs = obs.coords.proj,
-           bbox = NULL,
-           buffer.box = 0,
-           lat = "lat",
-           lon = "lon",
-           srs.cube = srs.cube,
+           srs.cube = "EPSG:6623",
            t0 = "2000-01-01",
            t1 = "2001-12-31",
            spatial.res = 250,
            limit = NULL,
-           # in meters
            prop = F,
            prop.res = 1000,
            select_values = NULL,
@@ -607,45 +574,26 @@ load_prop_values <-
            variable = NULL,
            temporal.res = "P1Y") {
     s <- rstac::stac(stac_path)
-    if (use.obs) {
-      if (inherits(obs, "data.frame")) {
-        proj.pts <- project_coords(obs,
-                                   lon = lon,
-                                   lat = lat,
-                                   proj_from = srs.cube)
-      } else {
-        proj.pts <- obs
-      }
-      bbox.proj <- points_to_bbox(proj.pts,
-                                  proj_from = srs.cube,
-                                  buffer = buffer.box)
-      left <- bbox.proj$xmin
-      right <- bbox.proj$xmax
-      bottom <- bbox.proj$ymin
-      top <- bbox.proj$ymax
-      bbox.wgs84 <- bbox.proj %>%
-        sf::st_bbox(crs = srs.cube) %>%
-        sf::st_as_sfc() %>%
-        sf::st_transform(crs = "EPSG:4326") %>%
-        sf::st_bbox()
-    } else {
-      bbox.proj <- bbox
-      left <- bbox.proj$xmin
-      right <- bbox.proj$xmax
-      bottom <- bbox.proj$ymin
-      top <- bbox.proj$ymax
-      if (left > right) {
-        stop("left and right seem reversed")
-      }
-      if (bottom > top) {
-        stop("bottom and top seem reversed")
-      }
-      bbox.wgs84 <- c(left, right, top, bottom) %>%
-        sf::st_bbox(crs = srs.cube) %>%
-        sf::st_as_sfc() %>%
-        sf::st_transform(crs = "EPSG:4326") %>%
-        sf::st_bbox()
+
+    left <- bbox$xmin
+    right <- bbox$xmax
+    bottom <- bbox$ymin
+    top <- bbox$ymax
+    
+    
+    if (left > right) {
+      stop("left and right seem reversed")
     }
+    if (bottom > top) {
+      stop("bottom and top seem reversed")
+    }
+    
+    # Create the bbox in WGS84 projection)
+    bbox.wgs84 <- bbox %>% sf::st_bbox(crs = srs.cube) %>% 
+      sf::st_as_sfc() %>% sf::st_transform(crs = "EPSG:4326") %>% 
+      sf::st_bbox()
+
+
     if (!is.null(t0)) {
       datetime <- format(lubridate::as_datetime(t0), "%Y-%m-%dT%H:%M:%SZ")
     } else {
