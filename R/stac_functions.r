@@ -692,8 +692,7 @@ load_prop_values <-
             as("Raster")
         }
         
-        cube_class <- cube_class[[j]]
-        cube_class
+        cube_class <- raster::calc(cube_class, sum, na.rm = T)
         names(cube_class) <-
           paste0("y", substring(layers[j], 11, 15), "_class", select_values[i])
         cube_class_rstack <-
