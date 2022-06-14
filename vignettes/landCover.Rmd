@@ -14,6 +14,7 @@ library("dplyr")
 library("rgbif")
 library("tidyr")
 library("stars")
+devtools::install_github("ReseauBiodiversiteQuebec/stac-catalogue")
 library("stacatalogue")
 ```
 
@@ -60,7 +61,8 @@ bbox <- stacatalogue::points_to_bbox(obs_pts, buffer = buffer)
 ### Filter classes
                          
 Let\'s select crop areas (class 11) and load it at the native resolution (250m) from 2000 to 2001 (2 years). We set prop to FALSE.
-```{r, warning=FALSE}
+```{r warning=FALSE}
+
 plot_categorical <- function(r, main = "") {
   values <- unique(data.frame(terra::rast(r[[1]]))[,1])
   my_col <- rev(terrain.colors(n = length(values)+1))
@@ -70,19 +72,21 @@ plot_categorical <- function(r, main = "") {
 
 crop_2000_2001 <- load_prop_values(stac_path = "https://io.biodiversite-quebec.ca/stac/",
                                 collections = c("esacci-lc"), 
-                                bbox = bbox,
-                                srs.cube = srs_cube,
-                                limit = 5000,
+                              bbox = bbox,
+                               srs.cube = srs_cube,
+                               limit = 5000,
                                 t0 = "2000-01-01",
                                 t1 = "2001-12-31",
                                 spatial.res = 250, # in meters
                                 prop = F,
+                                prop.res = 1000,
                                 select_values = c(11),
                                 temporal.res =  "P1Y")
 
 ```
 ```{r, warning=FALSE}
 plot_categorical(crop_2000_2001$y2000_class11, main = "Crop - year 2000")
+dev.off()
 ```
 
 
@@ -95,7 +99,7 @@ Let\'s calculate the proportions of crop and urban areas (class 11 and 190) at 1
 crop_urban_prop <-load_prop_values(stac_path = "https://io.biodiversite-quebec.ca/stac/",
                                 collections = c("esacci-lc"), 
                                 bbox = bbox,
-                                srs.cube = srs.cube,
+                                srs.cube = srs_cube,
                                 limit = 5000,
                                 t0 = "2000-01-01",
                                 t1 = "2000-12-31",
@@ -111,9 +115,5 @@ crop_urban_prop <-load_prop_values(stac_path = "https://io.biodiversite-quebec.c
 ```{r, warning=FALSE}
 par(mfrow=c(1,2))
 plot(crop_urban_prop$y2000_class11, main = "Proportion of crop - 2000")
-```
-
-```{r, warning=FALSE}
-par(mfrow=c(1,2))
 plot(crop_urban_prop$y2000_class190, main = "Proportion of urban area - 2000")
 ```
