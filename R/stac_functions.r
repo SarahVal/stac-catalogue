@@ -670,7 +670,7 @@ load_prop_values <-
         
         
         cube_class <-
-          raster_cube(st,
+          gdalcubes::raster_cube(st,
                       v,
                       mask = image_mask(
                         band = layers[j],
@@ -680,7 +680,7 @@ load_prop_values <-
         
         if (prop) {
           cube_class <- cube_class %>%
-            aggregate_space(dx = prop.res,
+            gdalcubes::aggregate_space(dx = prop.res,
                             dy = prop.res,
                             method = "count") %>%
             stars::st_as_stars() %>%
@@ -690,9 +690,10 @@ load_prop_values <-
           cube_class <- cube_class %>%
             stars::st_as_stars() %>%
             as("Raster")
+          cube_class <- raster::calc(cube_class, sum, na.rm = T)
         }
+       
         
-        cube_class <- raster::calc(cube_class, sum, na.rm = T)
         names(cube_class) <-
           paste0("y", substring(layers[j], 11, 15), "_class", select_values[i])
         cube_class_rstack <-
