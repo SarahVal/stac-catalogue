@@ -23,5 +23,6 @@ Imports:
     dplyr,
     terra (>= 1.5.21),
     gdalcubes (>= 0.6.1),
-    rstac
+    rstac,
+    stars
 VignetteBuilder: knitr
