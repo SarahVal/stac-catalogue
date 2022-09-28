@@ -15,4 +15,4 @@ import(sp)
 import(gdalcubes)
 import(rstac)
 import(sf)
-
+import(stars)
